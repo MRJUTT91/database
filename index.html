@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>API Connection & Chat</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg,#1f1c2c,#928dab);
+      margin:0;
+      padding:0;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      color:#fff;
+      min-height:100vh;
+    }
+    header {
+      width:100%;
+      padding:15px;
+      text-align:center;
+      background:rgba(0,0,0,0.4);
+      font-size:1.5rem;
+      font-weight:bold;
+      letter-spacing:1px;
+      backdrop-filter: blur(6px);
+    }
+    main {
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      width:90%;
+      max-width:800px;
+      margin:auto;
+    }
+    .card {
+      background:rgba(255,255,255,0.1);
+      border-radius:16px;
+      box-shadow:0 4px 15px rgba(0,0,0,0.3);
+      padding:20px;
+      margin:20px;
+      width:100%;
+      backdrop-filter:blur(8px);
+    }
+    .status {
+      text-align:center;
+      font-size:1.2rem;
+      margin-bottom:10px;
+    }
+    button {
+      background:#ff4b2b;
+      border:none;
+      padding:10px 20px;
+      color:#fff;
+      border-radius:8px;
+      cursor:pointer;
+      margin:5px;
+      font-weight:bold;
+      transition:0.3s;
+    }
+    button:hover {background:#ff3a1a;transform:scale(1.05)}
+    #chat {
+      border:1px solid rgba(255,255,255,0.3);
+      border-radius:12px;
+      padding:12px;
+      height:300px;
+      overflow:auto;
+      background:rgba(0,0,0,0.2);
+      margin-bottom:10px;
+    }
+    .msg {
+      padding:8px;
+      margin:6px 0;
+      border-radius:8px;
+      max-width:70%;
+      word-wrap:break-word;
+    }
+    .me {
+      background:#ff4b2b;
+      color:#fff;
+      margin-left:auto;
+      text-align:right;
+    }
+    .bot {
+      background:rgba(255,255,255,0.2);
+      color:#fff;
+      text-align:left;
+    }
+    #controls {
+      display:flex;
+      gap:10px;
+    }
+    #txt {
+      flex:1;
+      padding:10px;
+      border-radius:8px;
+      border:none;
+    }
+  </style>
+</head>
+<body>
+  <header>🔗 API Connection & 💬 Chat Demo</header>
+
+  <main>
+    <!-- API Connection Card -->
+    <div class="card">
+      <div class="status">API Connection Status:</div>
+      <button id="checkApi">Check API Connection</button>
+      <div id="apiResult"></div>
+    </div>
+
+    <!-- Chat Section Card -->
+    <div class="card">
+      <h3>💬 Chat Section</h3>
+      <div id="chat"></div>
+      <div id="controls">
+        <input id="txt" placeholder="Type a message..." />
+        <button id="send">Send</button>
+        <button id="refresh">Refresh</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ⚠️ Replace this with your actual Firebase function URL after deploy
+    const API_URL = "https://us-central1-database-870d2.cloudfunctions.net/chatbot";
+
+    const apiResult = document.getElementById('apiResult');
+    const checkApi = document.getElementById('checkApi');
+    const chat = document.getElementById('chat');
+    const txt = document.getElementById('txt');
+    const send = document.getElementById('send');
+    const refresh = document.getElementById('refresh');
+
+    // Connection Test
+    checkApi.addEventListener('click', async ()=>{
+      apiResult.textContent = 'Checking...';
+      try{
+        const res = await fetch(API_URL + '/api/data');
+        if(!res.ok) throw new Error('Failed');
+        const data = await res.json();
+        apiResult.textContent = '✅ Connected! Message: ' + data.message + ' | Time: ' + data.now;
+      }catch(e){
+        apiResult.textContent = '❌ Not Connected: ' + e.message;
+      }
+    });
+
+    function appendMessage(text, cls){
+      const d = document.createElement('div');
+      d.className = 'msg ' + cls;
+      d.textContent = text;
+      chat.appendChild(d);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    async function sendMessage(text){
+      appendMessage("You: " + text, 'me');
+      try{
+        const res = await fetch(API_URL + '/api/messages', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({text})
+        });
+        const json = await res.json();
+        appendMessage("Server: " + json.text, 'bot');
+      }catch(err){
+        appendMessage("Error: " + err.message, 'bot');
+      }
+    }
+
+    async function refreshMessages(){
+      try{
+        const res = await fetch(API_URL + '/api/messages');
+        const arr = await res.json();
+        chat.innerHTML = '';
+        for(const m of arr){
+          appendMessage(new Date(m.createdAt).toLocaleTimeString() + " — " + m.text, 'bot');
+        }
+      }catch(err){
+        appendMessage("Error: " + err.message, 'bot');
+      }
+    }
+
+    send.addEventListener('click', ()=>{
+      const v = txt.value.trim();
+      if(!v) return;
+      sendMessage(v);
+      txt.value = '';
+    });
+    refresh.addEventListener('click', refreshMessages);
+
+    // auto load
+    refreshMessages();
+  </script>
+</body>
+</html>
