@@ -102,7 +102,7 @@
   </style>
 </head>
 <body>
-  <header>🔗 API Connection & 💬 Chat Demo</header>
+  <header>🔗 jutt & 💬 Chat Demo</header>
 
   <main>
     <!-- API Connection Card -->
@@ -119,36 +119,36 @@
       <div id="controls">
         <input id="txt" placeholder="Type a message..." />
         <button id="send">Send</button>
-        <button id="refresh">Refresh</button>
       </div>
     </div>
   </main>
 
   <script>
-    // ⚠️ Replace this with your actual Firebase function URL after deploy
-    const API_URL = "https://mrjutt91.github.io/database.cloudfunctions.net/chatbot";
+    const SITE_URL = "https://mrjutt91.github.io/database/";
 
     const apiResult = document.getElementById('apiResult');
     const checkApi = document.getElementById('checkApi');
     const chat = document.getElementById('chat');
     const txt = document.getElementById('txt');
     const send = document.getElementById('send');
-    const refresh = document.getElementById('refresh');
 
-    // Connection Test
-    checkApi.addEventListener('click', async ()=>{
+    // ✅ Check if GitHub site is reachable
+    checkApi.addEventListener('click', async () => {
       apiResult.textContent = 'Checking...';
-      try{
-        const res = await fetch(API_URL + '/api/data');
-        if(!res.ok) throw new Error('Failed');
-        const data = await res.json();
-        apiResult.textContent = '✅ Connected! Message: ' + data.message + ' | Time: ' + data.now;
-      }catch(e){
-        apiResult.textContent = '❌ Not Connected: ' + e.message;
+      try {
+        const res = await fetch(SITE_URL, { method: 'GET' });
+        if (res.ok) {
+          apiResult.textContent = '✅ Website is reachable!';
+        } else {
+          apiResult.textContent = '❌ Website not reachable (Status ' + res.status + ')';
+        }
+      } catch (e) {
+        apiResult.textContent = '❌ Error: ' + e.message;
       }
     });
 
-    function appendMessage(text, cls){
+    // Chat display helper
+    function appendMessage(text, cls) {
       const d = document.createElement('div');
       d.className = 'msg ' + cls;
       d.textContent = text;
@@ -156,44 +156,20 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
-    async function sendMessage(text){
+    // ✅ Fake bot reply (since no backend API on GitHub Pages)
+    function sendMessage(text) {
       appendMessage("You: " + text, 'me');
-      try{
-        const res = await fetch(API_URL + '/api/messages', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({text})
-        });
-        const json = await res.json();
-        appendMessage("Server: " + json.text, 'bot');
-      }catch(err){
-        appendMessage("Error: " + err.message, 'bot');
-      }
+      setTimeout(() => {
+        appendMessage("Bot: This is a simulated reply to \"" + text + "\"", 'bot');
+      }, 600);
     }
 
-    async function refreshMessages(){
-      try{
-        const res = await fetch(API_URL + '/api/messages');
-        const arr = await res.json();
-        chat.innerHTML = '';
-        for(const m of arr){
-          appendMessage(new Date(m.createdAt).toLocaleTimeString() + " — " + m.text, 'bot');
-        }
-      }catch(err){
-        appendMessage("Error: " + err.message, 'bot');
-      }
-    }
-
-    send.addEventListener('click', ()=>{
+    send.addEventListener('click', () => {
       const v = txt.value.trim();
-      if(!v) return;
+      if (!v) return;
       sendMessage(v);
       txt.value = '';
     });
-    refresh.addEventListener('click', refreshMessages);
-
-    // auto load
-    refreshMessages();
   </script>
 </body>
 </html>
