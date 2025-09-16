@@ -1,175 +1,50 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>API Connection & Chat</title>
+  <meta charset="UTF-8">
+  <title>Chat Website</title>
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg,#1f1c2c,#928dab);
-      margin:0;
-      padding:0;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      color:#fff;
-      min-height:100vh;
-    }
-    header {
-      width:100%;
-      padding:15px;
-      text-align:center;
-      background:rgba(0,0,0,0.4);
-      font-size:1.5rem;
-      font-weight:bold;
-      letter-spacing:1px;
-      backdrop-filter: blur(6px);
-    }
-    main {
-      flex:1;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      width:90%;
-      max-width:800px;
-      margin:auto;
-    }
-    .card {
-      background:rgba(255,255,255,0.1);
-      border-radius:16px;
-      box-shadow:0 4px 15px rgba(0,0,0,0.3);
-      padding:20px;
-      margin:20px;
-      width:100%;
-      backdrop-filter:blur(8px);
-    }
-    .status {
-      text-align:center;
-      font-size:1.2rem;
-      margin-bottom:10px;
-    }
-    button {
-      background:#ff4b2b;
-      border:none;
-      padding:10px 20px;
-      color:#fff;
-      border-radius:8px;
-      cursor:pointer;
-      margin:5px;
-      font-weight:bold;
-      transition:0.3s;
-    }
-    button:hover {background:#ff3a1a;transform:scale(1.05)}
-    #chat {
-      border:1px solid rgba(255,255,255,0.3);
-      border-radius:12px;
-      padding:12px;
-      height:300px;
-      overflow:auto;
-      background:rgba(0,0,0,0.2);
-      margin-bottom:10px;
-    }
-    .msg {
-      padding:8px;
-      margin:6px 0;
-      border-radius:8px;
-      max-width:70%;
-      word-wrap:break-word;
-    }
-    .me {
-      background:#ff4b2b;
-      color:#fff;
-      margin-left:auto;
-      text-align:right;
-    }
-    .bot {
-      background:rgba(255,255,255,0.2);
-      color:#fff;
-      text-align:left;
-    }
-    #controls {
-      display:flex;
-      gap:10px;
-    }
-    #txt {
-      flex:1;
-      padding:10px;
-      border-radius:8px;
-      border:none;
-    }
+    body { font-family: Arial, sans-serif; background: #f5f5f5; }
+    #chat-box { width: 400px; height: 300px; border: 1px solid #ccc; overflow-y: auto; margin-bottom: 10px; padding: 5px; background: white; }
+    #message { width: 300px; }
+    button { padding: 5px 10px; }
   </style>
 </head>
 <body>
-  <header>🔗 jutt & 💬 Chat Demo</header>
-
-  <main>
-    <!-- API Connection Card -->
-    <div class="card">
-      <div class="status">API Connection Status:</div>
-      <button id="checkApi">Check API Connection</button>
-      <div id="apiResult"></div>
-    </div>
-
-    <!-- Chat Section Card -->
-    <div class="card">
-      <h3>💬 Chat Section</h3>
-      <div id="chat"></div>
-      <div id="controls">
-        <input id="txt" placeholder="Type a message..." />
-        <button id="send">Send</button>
-      </div>
-    </div>
-  </main>
+  <h2>Chat Website</h2>
+  <div id="chat-box"></div>
+  <input type="text" id="message" placeholder="Type message...">
+  <button onclick="sendMessage()">Send</button>
 
   <script>
-    const SITE_URL = "https://mrjutt91.github.io/database/";
+    async function sendMessage() {
+      const msg = document.getElementById("message").value;
+      if (msg.trim() === "") return;
 
-    const apiResult = document.getElementById('apiResult');
-    const checkApi = document.getElementById('checkApi');
-    const chat = document.getElementById('chat');
-    const txt = document.getElementById('txt');
-    const send = document.getElementById('send');
+      // show in website
+      const box = document.getElementById("chat-box");
+      box.innerHTML += `<div><b>You:</b> ${msg}</div>`;
+      document.getElementById("message").value = "";
 
-    // ✅ Check if GitHub site is reachable
-    checkApi.addEventListener('click', async () => {
-      apiResult.textContent = 'Checking...';
-      try {
-        const res = await fetch(SITE_URL, { method: 'GET' });
-        if (res.ok) {
-          apiResult.textContent = '✅ Website is reachable!';
-        } else {
-          apiResult.textContent = '❌ Website not reachable (Status ' + res.status + ')';
-        }
-      } catch (e) {
-        apiResult.textContent = '❌ Error: ' + e.message;
-      }
-    });
-
-    // Chat display helper
-    function appendMessage(text, cls) {
-      const d = document.createElement('div');
-      d.className = 'msg ' + cls;
-      d.textContent = text;
-      chat.appendChild(d);
-      chat.scrollTop = chat.scrollHeight;
+      // send to backend (C# API)
+      await fetch("http://localhost:5000/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg })
+      });
     }
 
-    // ✅ Fake bot reply (since no backend API on GitHub Pages)
-    function sendMessage(text) {
-      appendMessage("You: " + text, 'me');
-      setTimeout(() => {
-        appendMessage("Bot: This is a simulated reply to \"" + text + "\"", 'bot');
-      }, 600);
+    async function loadMessages() {
+      const res = await fetch("http://localhost:5000/api/chat");
+      const data = await res.json();
+      const box = document.getElementById("chat-box");
+      box.innerHTML = "";
+      data.forEach(m => {
+        box.innerHTML += `<div><b>${m.sender}:</b> ${m.text}</div>`;
+      });
     }
 
-    send.addEventListener('click', () => {
-      const v = txt.value.trim();
-      if (!v) return;
-      sendMessage(v);
-      txt.value = '';
-    });
+    setInterval(loadMessages, 2000); // auto refresh every 2s
   </script>
 </body>
 </html>
