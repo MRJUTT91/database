@@ -1,198 +1,2066 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Shared Chat + Device Requests</title>
-<style>
-  :root{--bg:#0f1724;--card:rgba(255,255,255,0.05);--accent:#ff6b3d}
-  body{margin:0;font-family:Segoe UI,Arial;background:linear-gradient(135deg,var(--bg),#243447);color:#fff;display:flex;justify-content:center;padding:28px}
-  .wrap{width:100%;max-width:980px;display:grid;grid-template-columns:1fr 360px;gap:18px}
-  .card{background:var(--card);padding:16px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,0.5)}
-  header{grid-column:1/-1;text-align:center;margin-bottom:6px}
-  h1{margin:0;font-size:18px}
-  /* left chat */
-  #chatWindow{height:560px;display:flex;flex-direction:column}
-  #messages{flex:1;overflow:auto;padding:12px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.04))}
-  .msg{max-width:78%;padding:8px 12px;margin:8px 0;border-radius:10px}
-  .me{margin-left:auto;background:linear-gradient(180deg,var(--accent),#ff5422)}
-  .who{background:rgba(255,255,255,0.06)}
-  #controls{display:flex;gap:10px;margin-top:10px}
-  input[type=text]{flex:1;padding:10px;border-radius:8px;border:none}
-  button{padding:10px 12px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer}
-  /* right column */
-  .section{margin-bottom:12px}
-  .req{padding:10px;background:rgba(255,255,255,0.03);border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
-  .small{font-size:13px;color:rgba(255,255,255,0.7)}
-  .chip{background:rgba(255,255,255,0.06);padding:6px 10px;border-radius:20px}
-  .connected{color:lightgreen}
-  footer{grid-column:1/-1;text-align:center;padding-top:12px;color:rgba(255,255,255,0.6)}
-  @media(max-width:900px){.wrap{grid-template-columns:1fr;}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Auth - Secure Authentication System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* All your existing CSS styles remain the same */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            color: #fff;
+            position: relative;
+            overflow-x: hidden;
+            background-color: #0f172a;
+            font-family: 'Poppins', sans-serif;
+            opacity: 1;
+        }
+        
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background-color: #0f172a;
+            z-index: -1;
+        }
+        
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #070a12;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.8s ease-out, visibility 0.8s ease-out;
+        }
+        
+        .loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .loader {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin-bottom: 30px;
+        }
+        
+        .loader-circle {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 5px solid transparent;
+            border-radius: 50%;
+            border-top-color: #3b82f6;
+            animation: spin 1.5s linear infinite;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+        
+        .loader-circle:nth-child(2) {
+            border-top-color: #60a5fa;
+            width: 90%;
+            height: 90%;
+            top: 5%;
+            left: 5%;
+            animation: spin 1.8s linear infinite reverse;
+        }
+        
+        .loader-circle:nth-child(3) {
+            border-top-color: #93c5fd;
+            width: 80%;
+            height: 80%;
+            top: 10%;
+            left: 10%;
+            animation: spin 2.1s linear infinite;
+        }
+        
+        .loader-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ffffff;
+        }
+        
+        .loading-text {
+            color: #64748b;
+            font-size: 1.2rem;
+            margin-top: 20px;
+        }
+        
+        .loading-progress {
+            width: 200px;
+            height: 4px;
+            background-color: #0f172a;
+            border-radius: 2px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        
+        .loading-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #1d4ed8, #3b82f6);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 50px;
+            background-color: rgba(11, 15, 26, 0.85);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #3b82f6;
+            display: flex;
+            align-items: center;
+            animation: logoGlow 2s infinite alternate;
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        @keyframes logoGlow {
+            from { text-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
+            to { text-shadow: 0 0 15px rgba(59, 130, 246, 0.8); }
+        }
+        
+        .logo i {
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            to { transform: scale(1); }
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+        
+        .nav-links a {
+            color: #e2e8f0;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background-color: #3b82f6;
+            transition: width 0.3s ease;
+        }
+        
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+        
+        .nav-links a:hover {
+            color: #3b82f6;
+        }
+        
+        .client-area {
+            background-color: #3b82f6;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .client-area:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+        }
+        
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 120px 20px 80px;
+            background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.1), transparent 50%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(to top, #0f172a, transparent);
+            z-index: 1;
+        }
+        
+        .welcome {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa, #93c5fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+            animation: textShine 5s ease-in-out infinite alternate;
+        }
+        
+        @keyframes textShine {
+            0% { background-position: 0% 50%; }
+            to { background-position: 100% 50%; }
+        }
+        
+        .tagline {
+            font-size: 1.3rem;
+            margin-bottom: 40px;
+            max-width: 700px;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .primary-btn {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+            position: relative;
+            overflow: hidden;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        
+        .primary-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+        }
+        
+        .secondary-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+        }
+        
+        .secondary-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+        }
+        
+        .quick-links {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .quick-links a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .quick-links a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 1px;
+            bottom: -2px;
+            left: 0;
+            background-color: #3b82f6;
+            transition: width 0.3s ease;
+        }
+        
+        .quick-links a:hover::after {
+            width: 100%;
+        }
+        
+        .features {
+            padding: 100px 20px;
+            background-color: rgba(11, 15, 26, 0.85);
+            position: relative;
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 60px;
+            color: #e2e8f0;
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        .section-title span {
+            color: #3b82f6;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .feature-card {
+            background-color: rgba(30, 41, 59, 0.7);
+            border-radius: 10px;
+            padding: 30px;
+            transition: all 0.3s ease;
+            border: 1px solid #334155;
+            backdrop-filter: blur(5px);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            border-color: #3b82f6;
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            color: #3b82f6;
+            margin-bottom: 20px;
+        }
+        
+        .feature-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #e2e8f0;
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        .feature-desc {
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+        
+        .pricing {
+            padding: 100px 20px;
+            background-color: rgba(11, 15, 26, 0.85);
+            text-align: center;
+        }
+        
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .pricing-card {
+            background-color: rgba(30, 41, 59, 0.7);
+            border-radius: 10px;
+            padding: 40px 30px;
+            transition: all 0.3s ease;
+            border: 1px solid #334155;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+        }
+        
+        .pricing-card.popular {
+            border: 1px solid #3b82f6;
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.2);
+        }
+        
+        .popular-badge {
+            position: absolute;
+            top: 15px;
+            right: -30px;
+            background-color: #3b82f6;
+            color: white;
+            padding: 5px 40px;
+            transform: rotate(45deg);
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .pricing-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #e2e8f0;
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        .pricing-price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #3b82f6;
+        }
+        
+        .pricing-period {
+            font-size: 1rem;
+            color: #94a3b8;
+        }
+        
+        .pricing-features {
+            margin-bottom: 30px;
+        }
+        
+        .pricing-feature {
+            margin-bottom: 10px;
+            color: #94a3b8;
+        }
+        
+        .pricing-feature i {
+            color: #3b82f6;
+            margin-right: 8px;
+        }
+        
+        .pricing-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .pricing-btn.primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            margin-bottom: 10px;
+        }
+        
+        .pricing-btn.primary:hover {
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+        }
+        
+        .pricing-btn.secondary {
+            background: transparent;
+            color: #3b82f6;
+            border: 1px solid #3b82f6;
+        }
+        
+        .pricing-btn.secondary:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .faq {
+            padding: 100px 20px;
+            background-color: rgba(11, 15, 26, 0.85);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .faq-item {
+            margin-bottom: 20px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .faq-question {
+            padding: 20px;
+            background-color: rgba(30, 41, 59, 0.7);
+            color: #e2e8f0;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .faq-question::after {
+            content: '+';
+            font-size: 1.5rem;
+        }
+        
+        .faq-question.active::after {
+            content: '-';
+        }
+        
+        .faq-question:hover {
+            background-color: rgba(51, 65, 85, 0.5);
+        }
+        
+        .faq-answer {
+            padding: 0 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+        
+        .faq-answer.active {
+            padding: 20px;
+            max-height: 500px;
+        }
+        
+        footer {
+            background-color: rgba(11, 15, 26, 0.85);
+            padding: 80px 50px 30px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        
+        .footer-section {
+            margin-bottom: 50px;
+            min-width: 200px;
+        }
+        
+        .footer-section h3 {
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            color: #e2e8f0;
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        .footer-section ul {
+            list-style: none;
+        }
+        
+        .footer-section ul li {
+            margin-bottom: 12px;
+        }
+        
+        .footer-section ul li a {
+            color: #94a3b8;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-section ul li a:hover {
+            color: #3b82f6;
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .social-link {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(30, 41, 59, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            transition: all 0.3s ease;
+        }
+        
+        .social-link:hover {
+            color: #3b82f6;
+            transform: translateY(-3px);
+        }
+        
+        .copyright {
+            width: 100%;
+            text-align: center;
+            margin-top: 50px;
+            color: #64748b;
+            font-size: 0.9rem;
+            padding-top: 20px;
+            border-top: 1px solid rgba(30, 41, 59, 0.7);
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(7, 10, 18, 0.98);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s ease;
+        }
+        
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            width: 450px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 40px;
+            background-color: rgba(30, 41, 59, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            transform: translateY(50px) scale(0.95);
+            opacity: 0;
+            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            border: 1px solid #334155;
+            backdrop-filter: blur(10px);
+        }
+        
+        .modal.active .modal-content {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+            transition-delay: 0.2s;
+        }
+        
+        .modal.closing .modal-content {
+            transform: translateY(50px) scale(0.95);
+            opacity: 0;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 50%;
+            background-color: rgba(11, 15, 26, 0.5);
+            z-index: 1;
+        }
+        
+        .close-modal:hover {
+            color: #3b82f6;
+            background-color: rgba(59, 130, 246, 0.1);
+            transform: rotate(90deg);
+        }
+        
+        .modal-title {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .modal-title h2 {
+            color: #3b82f6;
+            font-size: 2rem;
+            margin-bottom: 10px;
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        .modal-title p {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #64748b;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 15px 15px 15px 45px;
+            border: 1px solid rgba(30, 41, 59, 0.7);
+            border-radius: 8px;
+            background-color: rgba(11, 15, 26, 0.7);
+            color: white;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        
+        .form-group .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 40px;
+            color: #64748b;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus ~ .input-icon {
+            color: #3b82f6;
+            transform: scale(1.1);
+        }
+        
+        .remember-forgot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            font-size: 0.9rem;
+        }
+        
+        .remember-me {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .remember-me input {
+            margin-right: 8px;
+            cursor: pointer;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border: 1px solid rgba(30, 41, 59, 0.7);
+            border-radius: 3px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        
+        .remember-me input:checked {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        
+        .remember-me input:checked::after {
+            content: "✓";
+            position: absolute;
+            color: white;
+            font-size: 12px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .forgot-password {
+            color: #3b82f6;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .forgot-password:hover {
+            text-decoration: underline;
+        }
+        
+        .modal-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .modal-btn.primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+        
+        .modal-btn.primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        }
+        
+        .modal-footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+        
+        .modal-footer a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        
+        .modal-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .status-message {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #fff;
+            padding: 15px 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            max-width: 90%;
+            width: auto;
+            white-space: nowrap;
+            font-weight: 500;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .status-message.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .status-message.success {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        
+        .status-message.error {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+        
+        .status-message.warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+        
+        .status-message.info {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        }
+
+        /* Verification Modal Styles */
+        .verification-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(7, 10, 18, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s ease;
+        }
+        
+        .verification-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .verification-content {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            width: 400px;
+            max-width: 90%;
+            text-align: center;
+            border: 1px solid #334155;
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .verification-modal.active .verification-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+        
+        .verification-icon {
+            font-size: 3rem;
+            color: #3b82f6;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        
+        .verification-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #e2e8f0;
+        }
+        
+        .verification-text {
+            color: #94a3b8;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        
+        .code-inputs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+        
+        .code-input {
+            width: 50px;
+            height: 60px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: 2px solid #334155;
+            border-radius: 8px;
+            background: rgba(11, 15, 26, 0.7);
+            color: #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .code-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+            outline: none;
+        }
+        
+        .code-input.error {
+            border-color: #ef4444;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+        }
+        
+        .verification-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: #3b82f6;
+            border: 1px solid #3b82f6;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .loading-animation {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        .verification-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .resend-code {
+            color: #3b82f6;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .resend-code:hover {
+            color: #60a5fa;
+            text-decoration: underline;
+        }
+        
+        .resend-code:disabled {
+            color: #64748b;
+            cursor: not-allowed;
+        }
+        
+        .resend-timer {
+            color: #94a3b8;
+            font-size: 0.8rem;
+        }
+        
+        .verification-status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 0.9rem;
+            display: none;
+        }
+        
+        .verification-status.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border: 1px solid #10b981;
+        }
+        
+        .verification-status.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+        }
+        
+        @keyframes slideDown {
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @media (max-width: 768px) {
+            nav { padding: 15px 20px; }
+            .nav-links { gap: 15px; }
+            .welcome { font-size: 2.5rem; }
+            .tagline { font-size: 1.1rem; }
+            .cta-buttons { flex-direction: column; gap: 15px; }
+            .quick-links { flex-direction: column; gap: 15px; }
+            .features-grid, .pricing-grid { grid-template-columns: 1fr; }
+            .modal-content { width: 90%; padding: 30px 20px; }
+            footer { flex-direction: column; padding: 50px 20px 30px; }
+            .footer-section { margin-bottom: 30px; }
+            .code-inputs { gap: 5px; }
+            .code-input { width: 40px; height: 50px; font-size: 1.2rem; }
+        }
+    </style>
 </head>
 <body>
-  <div class="wrap">
-    <header class="card"><h1>Unified Chat — web ↔ device requests</h1></header>
-
-    <div class="card" id="chatWindow">
-      <div class="small">API status: <span id="apiStatus">unknown</span></div>
-      <div id="messages"></div>
-
-      <div id="controls">
-        <input id="txt" type="text" placeholder="Type message..." />
-        <button id="send">Send</button>
-        <button id="refresh">Refresh</button>
-      </div>
+    <div id="particles-js"></div>
+    
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loader">
+            <div class="loader-circle"></div>
+            <div class="loader-circle"></div>
+            <div class="loader-circle"></div>
+            <div class="loader-logo">Cloud Auth</div>
+        </div>
+        <div class="loading-text">Loading Authentication System</div>
+        <div class="loading-progress">
+            <div class="loading-progress-bar" id="progressBar"></div>
+        </div>
+    </div>
+    
+    <nav>
+        <div class="logo">
+            <i class="fas fa-cloud"></i> Cloud Auth
+        </div>
+        <div class="nav-links">
+            <a href="#" id="homeLink" class="active">Home</a>
+            <a href="#" id="featuresLink">Features</a>
+            <a href="#" id="pricingLink">Pricing</a>
+            <a href="#" class="client-area" id="clientAreaBtn">Login</a>
+        </div>
+    </nav>
+    
+    <div id="mainContent">
+        <section class="hero" id="home">
+            <h1 class="welcome">Welcome to Cloud Auth</h1>
+            <p class="tagline">
+                The most secure and reliable authentication system for your applications. 
+                Protect your software with our advanced licensing and user management system.
+            </p>
+            <div class="cta-buttons">
+                <button class="primary-btn" id="openLogin">Login Now</button>
+                <button class="secondary-btn" id="openRegister">Register</button>
+            </div>
+            <div class="quick-links">
+                <a href="#" id="forgotPasswordLink">Forgot your password?</a>
+                <a href="#">Documentation</a>
+                <a href="#">Support Center</a>
+            </div>
+        </section>
+        
+        <section class="features" id="features">
+            <h2 class="section-title">Key <span>Features</span></h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+                    <h3 class="feature-title">Secure Authentication</h3>
+                    <p class="feature-desc">Protect your software with military-grade encryption and secure authentication protocols.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-key"></i></div>
+                    <h3 class="feature-title">License Management</h3>
+                    <p class="feature-desc">Easily create, manage, and track licenses for your software with our intuitive dashboard.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-users"></i></div>
+                    <h3 class="feature-title">User Management</h3>
+                    <p class="feature-desc">Manage your users, their subscriptions, and access levels with our powerful admin panel.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-code"></i></div>
+                    <h3 class="feature-title">API Integration</h3>
+                    <p class="feature-desc">Simple API integration with support for multiple programming languages and platforms.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-file-alt"></i></div>
+                    <h3 class="feature-title">Comprehensive Logs</h3>
+                    <p class="feature-desc">Detailed logs for all authentication attempts, license validations, and user activities.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-rocket"></i></div>
+                    <h3 class="feature-title">High Performance</h3>
+                    <p class="feature-desc">Our servers are optimized for speed and reliability, ensuring minimal latency for your users.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section class="pricing" id="pricing">
+            <h2 class="section-title">Simple <span>Pricing</span></h2>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3 class="pricing-title">Tester</h3>
+                    <div class="pricing-price">$0<span class="pricing-period">/year</span></div>
+                    <div class="pricing-features">
+                        <div class="pricing-feature"><i class="fas fa-check"></i> 1 Application</div>
+                        <div class="pricing-feature"><i class="fas fa-check"></i> 10 Licenses</div>
+                        <div class="pricing-feature"><i class="fas fa-check"></i> 10 Users</div>
+                        <div class="pricing-feature"><i class="fas fa-check"></i> Basic Features</div>
+                    </div>
+                    <button class="pricing-btn primary" id="startFreeTrial">Get Started</button>
+                </div>
+                <div class="pricing-card popular">
+                    <div class="popular-badge">POPULAR</div>
+                    <h3 class="pricing-title">Developer</h3>
+                    <div class="pricing-price">$14.99<span class="pricing-period">/year</span></div>
+                    <div class="pricing-features">
+                        <div class="pricing-feature"><i class="fas fa-check"></i> Unlimited Apps</div>
+                        <div class="pricing-feature"><i class="fas fa-check"></i> Unlimited Licenses</div>
+                        <div class="pricing-feature"><i class="fas fa-check"></i> Unlimited Users</div>
+                        <div class="pricing-feature"><i class="fas fa-check"></i> All Features</div>
+                    </div>
+                    <button class="pricing-btn primary">Purchase Now</button>
+                    <button class="pricing-btn secondary">Learn More</button>
+                </div>
+                <div class="pricing-card">
+                    <h3 class="pricing-title">Seller</h3>
+                    <div class="pricing-price">$24.99<span class="pricing-period">/year</span></div>
+                    <div class="pricing-features">
+                        <div class="pricing-feature"><i class="fas fa-check"></i> Unlimited Apps</div>
+                        <div class="pricing-feature"><i class="fas fa-check"></i> Unlimited Licenses</div>
+                        <div class="pricing-feature"><i class="fas fa-check"></i> Unlimited Users</div>
+                        <div class="pricing-feature"><i class="fas fa-check"></i> All Features + Extras</div>
+                    </div>
+                    <button class="pricing-btn primary">Purchase Now</button>
+                    <button class="pricing-btn secondary">Learn More</button>
+                </div>
+            </div>
+        </section>
+        
+        <section class="faq">
+            <h2 class="section-title">Frequently <span>Asked Questions</span></h2>
+            <div class="faq-item">
+                <div class="faq-question">What programming languages are supported?</div>
+                <div class="faq-answer">Cloud Auth provides API libraries for C++, C#, Java, Python, JavaScript, and more. Our REST API can be integrated with any language that supports HTTP requests.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">How secure is your authentication system?</div>
+                <div class="faq-answer">We use industry-standard encryption (AES-256) for all communications and store passwords using bcrypt hashing. Our servers are regularly audited for security vulnerabilities.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">Can I upgrade my plan later?</div>
+                <div class="faq-answer">Yes, you can upgrade your plan at any time from your dashboard. The change will take effect immediately and you'll only pay the prorated difference.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">Do you offer refunds?</div>
+                <div class="faq-answer">We offer a 30-day money-back guarantee on all paid plans. If you're not satisfied with our service, you can request a full refund within the first 30 days.</div>
+            </div>
+        </section>
+        
+        <footer>
+            <div class="footer-section">
+                <h3>Cloud Auth</h3>
+                <p style="color: #94a3b8; margin-bottom: 20px; max-width: 250px;">The most secure authentication system for your applications.</p>
+                <div class="social-links">
+                    <a href="#" class="social-link"><i class="fab fa-github"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-discord"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-telegram"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#pricing">Pricing</a></li>
+                    <li><a href="#">Documentation</a></li>
+                    <li><a href="#">Support</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Resources</h3>
+                <ul>
+                    <li><a href="#">API Documentation</a></li>
+                    <li><a href="#">GitHub Examples</a></li>
+                    <li><a href="#">Community Forum</a></li>
+                    <li><a href="#">Blog</a></li>
+                    <li><a href="#">Status</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Legal</h3>
+                <ul>
+                    <li><a href="terms-of-service.html">Terms of Service</a></li>
+                    <li><a href="privacy-policy.html">Privacy Policy</a></li>
+                    <li><a href="#">GDPR Compliance</a></li>
+                    <li><a href="#">Refund Policy</a></li>
+                </ul>
+            </div>
+            <div class="copyright">Copyright © 2023 Cloud Auth LLC. All Rights Reserved.</div>
+        </footer>
+    </div>
+    
+    <!-- Login Modal -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeLogin">&times;</span>
+            <div class="modal-title">
+                <h2>Login to Cloud Auth</h2>
+                <p>Access your account to manage your applications</p>
+            </div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="email" id="loginEmail" placeholder="Enter your email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                </div>
+                
+                <div class="remember-forgot">
+                    <label class="remember-me">
+                        <input type="checkbox" id="remember">
+                        Remember me
+                    </label>
+                    <a href="#" class="forgot-password" id="forgotPasswordModal">Forgot password?</a>
+                </div>
+                
+                <button type="submit" class="modal-btn primary">Sign In</button>
+                
+                <div class="modal-footer">
+                    Don't have an account? <a href="#" id="switchToRegister">Register now</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Register Modal -->
+    <div class="modal" id="registerModal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeRegister">&times;</span>
+            <div class="modal-title">
+                <h2>Create Account</h2>
+                <p>Create an account to manage your licenses</p>
+            </div>
+            
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="reg-username">Username</label>
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" id="reg-username" placeholder="Choose a username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="reg-email">Email</label>
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="email" id="reg-email" placeholder="Enter your email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="reg-password">Password</label>
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="reg-password" placeholder="Create a password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="reg-confirm-password">Confirm Password</label>
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="reg-confirm-password" placeholder="Confirm your password" required>
+                </div>
+                
+                <button type="submit" class="modal-btn primary">Register</button>
+                
+                <div class="modal-footer">
+                    Already have an account? <a href="#" id="switchToLogin">Login here</a>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <div class="card">
-      <div class="section">
-        <div class="small">Connected devices</div>
-        <div id="devicesList"></div>
-      </div>
-
-      <div class="section">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div class="small">Pending connection requests</div>
-          <button id="reloadReq" class="chip">Reload</button>
+    <!-- Email Verification Modal -->
+    <div class="verification-modal" id="emailVerificationModal">
+        <div class="verification-content">
+            <div class="verification-icon">
+                <i class="fas fa-envelope"></i>
+            </div>
+            <h3 class="verification-title">Email Verification Required</h3>
+            <p class="verification-text" id="emailVerificationText">
+                A 6-digit verification code has been sent to your email address. Please enter it below to complete your registration.
+            </p>
+            
+            <div class="code-inputs">
+                <input type="text" class="code-input" maxlength="1" data-index="1">
+                <input type="text" class="code-input" maxlength="1" data-index="2">
+                <input type="text" class="code-input" maxlength="1" data-index="3">
+                <input type="text" class="code-input" maxlength="1" data-index="4">
+                <input type="text" class="code-input" maxlength="1" data-index="5">
+                <input type="text" class="code-input" maxlength="1" data-index="6">
+            </div>
+            
+            <div id="emailVerificationStatus" class="verification-status" style="display: none;"></div>
+            
+            <div class="verification-actions">
+                <button class="resend-code" id="resendEmailCodeBtn" disabled>
+                    Resend Code <span id="resendEmailTimer">(60s)</span>
+                </button>
+                <div class="verification-buttons">
+                    <button class="btn btn-secondary" id="cancelEmailVerification">Cancel</button>
+                    <button class="btn btn-primary" id="verifyEmailCodeBtn">
+                        <span class="loading-animation" style="display: none;"></span>
+                        Verify Email
+                    </button>
+                </div>
+            </div>
         </div>
-        <div id="requestsList" style="margin-top:8px"></div>
-      </div>
-
-      <div class="section">
-        <div class="small">Quick actions</div>
-        <div style="margin-top:8px;display:flex;gap:8px">
-          <button id="checkApi">Check API</button>
-          <button id="clearMessages">Clear (local)</button>
-        </div>
-      </div>
     </div>
 
-    <footer class="small">Server API designed for local/dev use. Replace <code>API_BASE</code> to deployed URL.</footer>
-  </div>
+    <div class="status-message" id="statusMessage">
+        <i class="fas fa-check-circle"></i>
+        <span id="statusText">Message goes here</span>
+    </div>
 
-<script>
-  // ======= CONFIG =======
-  const API_BASE = "http://localhost:5000"; // change to deployed URL if hosted
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- EmailJS Library -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
-  // ======= HELPERS =======
-  const el = id => document.getElementById(id);
-  const messagesDiv = el('messages'), devicesDiv = el('devicesList'), requestsDiv = el('requestsList');
-  const apiStatus = el('apiStatus');
+    <script>
+        // EmailJS Initialization - Replace with your actual EmailJS credentials
+        (function() {
+            emailjs.init("3Bg5FQhFQWwEhDMys"); // Replace with your EmailJS public key
+        })();
 
-  function append(msgObj){
-    const d = document.createElement('div');
-    d.className = 'msg ' + (msgObj.from === 'Website' ? 'me' : 'who');
-    d.innerHTML = `<strong>${escapeHtml(msgObj.from)}</strong>: ${escapeHtml(msgObj.text)} <div class="small">${new Date(msgObj.time||msgObj.time).toLocaleTimeString()}</div>`;
-    messagesDiv.appendChild(d);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  }
-  function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDG0KRkCzBSYPTNhOwXnHtNu4glhKBwDME",
+            authDomain: "database-8fd0b.firebaseapp.com",
+            projectId: "database-8fd0b",
+            storageBucket: "database-8fd0b.firebasestorage.app",
+            messagingSenderId: "811768541905",
+            appId: "1:811768541905:web:7a7485ae81d6f23fe34bf0",
+            measurementId: "G-Q4XP5R9HJ1"
+        };
 
-  // ======= API calls =======
-  async function checkApi(){
-    apiStatus.textContent = 'checking...';
-    try{
-      const r = await fetch(API_BASE + '/api/check');
-      if(!r.ok) throw new Error(r.status);
-      const j = await r.json();
-      apiStatus.textContent = 'OK (' + new Date(j.time).toLocaleTimeString() + ')';
-      apiStatus.style.color = 'lightgreen';
-    }catch(e){
-      apiStatus.textContent = 'offline';
-      apiStatus.style.color = 'salmon';
-    }
-  }
+        // Initialize Firebase
+        let db;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            console.log("Firebase initialized successfully");
+        } catch (error) {
+            console.error("Firebase initialization error:", error);
+            db = null;
+        }
 
-  async function loadMessages(){
-    try{
-      const r = await fetch(API_BASE + '/api/messages');
-      const arr = await r.json();
-      messagesDiv.innerHTML = '';
-      arr.forEach(m=> append(m));
-    }catch(e){
-      console.error(e);
-    }
-  }
+        // Fallback storage
+        const fallbackStorage = {
+            users: JSON.parse(localStorage.getItem('cloudAuthUsers') || '{}'),
+            saveUser: function(userData) {
+                this.users[userData.email] = userData;
+                localStorage.setItem('cloudAuthUsers', JSON.stringify(this.users));
+                return true;
+            },
+            getUser: function(email) {
+                return this.users[email] || null;
+            },
+            userExists: function(email) {
+                return !!this.users[email];
+            }
+        };
 
-  async function sendMessage(text){
-    try{
-      await fetch(API_BASE + '/api/messages', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ from: 'Website', text })
-      });
-      await loadMessages();
-    }catch(e){
-      append({ from:'System', text:'Error sending: '+e.message, time:new Date().toISOString() });
-    }
-  }
+        let emailVerificationCode = '';
+        let emailVerificationTimer = null;
+        let currentUserEmail = '';
+        let currentUserName = '';
 
-  async function loadDevices(){
-    try{
-      const r = await fetch(API_BASE + '/api/devices');
-      const arr = await r.json();
-      devicesDiv.innerHTML = '';
-      arr.forEach(d=>{
-        const el = document.createElement('div');
-        el.className = 'small';
-        el.innerHTML = `${d.name} <span class="${d.connected? 'connected':'small'}">[${d.connected? 'connected':'not connected'}]</span>`;
-        devicesDiv.appendChild(el);
-      });
-    }catch(e){}
-  }
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize particles
+            particlesJS('particles-js', {
+                particles: {
+                    number: { value: 80, density: { enable: true, value_area: 800 } },
+                    color: { value: "#3b82f6" },
+                    shape: { type: "circle" },
+                    opacity: { value: 0.3, random: true },
+                    size: { value: 3, random: true },
+                    line_linked: { enable: true, distance: 150, color: "#3b82f6", opacity: 0.2, width: 1 },
+                    move: { enable: true, speed: 2 }
+                },
+                interactivity: {
+                    detect_on: "canvas",
+                    events: {
+                        onhover: { enable: true, mode: "grab" },
+                        onclick: { enable: true, mode: "push" },
+                        resize: true
+                    }
+                },
+                retina_detect: true
+            });
 
-  async function loadRequests(){
-    try{
-      const r = await fetch(API_BASE + '/api/requests');
-      const arr = await r.json();
-      requestsDiv.innerHTML = '';
-      if(arr.length===0){ requestsDiv.innerHTML = '<div class="small">No requests</div>'; return; }
-      arr.forEach(req=>{
-        const row = document.createElement('div');
-        row.className = 'req';
-        row.innerHTML = `<div><strong>${escapeHtml(req.name)}</strong><div class="small">${new Date(req.time).toLocaleString()}</div></div>
-          <div>
-            <button onclick="acceptRequest('${req.id}')">Accept</button>
-          </div>`;
-        requestsDiv.appendChild(row);
-      });
-    }catch(e){}
-  }
+            const loadingScreen = document.getElementById('loadingScreen');
+            const progressBar = document.getElementById('progressBar');
+            
+            let progress = 0;
+            const interval = setInterval(function() {
+                progress += Math.random() * 15;
+                if (progress > 100) progress = 100;
+                progressBar.style.width = progress + '%';
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(function() {
+                        loadingScreen.classList.add('hidden');
+                        setTimeout(function() {
+                            loadingScreen.style.display = 'none';
+                        }, 800);
+                    }, 500);
+                }
+            }, 150);
 
-  async function acceptRequest(requestId){
-    try{
-      const r = await fetch(API_BASE + '/api/accept', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ requestId })
-      });
-      const j = await r.json();
-      if(j.ok){
-        await loadRequests();
-        await loadDevices();
-        append({ from:'System', text:`Accepted device ${j.deviceId}`, time:new Date().toISOString() });
-      } else {
-        append({ from:'System', text:'Accept failed', time:new Date().toISOString() });
-      }
-    }catch(e){
-      append({ from:'System', text:'Accept error: '+e.message, time:new Date().toISOString() });
-    }
-  }
+            // Modal setup function
+            function setupModal(openBtnId, modalId, closeBtnId) {
+                const openBtn = document.getElementById(openBtnId);
+                const modal = document.getElementById(modalId);
+                const closeBtn = document.getElementById(closeBtnId);
+                
+                if (openBtn) {
+                    openBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        modal.classList.add('active');
+                        document.body.style.overflow = 'hidden';
+                    });
+                }
+                
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', function() {
+                        modal.classList.add('closing');
+                        modal.classList.remove('active');
+                        setTimeout(() => {
+                            modal.classList.remove('closing');
+                            document.body.style.overflow = 'auto';
+                        }, 600);
+                    });
+                }
+                
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        modal.classList.add('closing');
+                        modal.classList.remove('active');
+                        setTimeout(() => {
+                            modal.classList.remove('closing');
+                            document.body.style.overflow = 'auto';
+                        }, 600);
+                    }
+                });
+            }
 
-  // ======= UI wiring =======
-  el('send').addEventListener('click', ()=>{ const v = el('txt').value.trim(); if(!v) return; sendMessage(v); el('txt').value=''; });
-  el('refresh').addEventListener('click', ()=> { loadMessages(); loadDevices(); loadRequests(); });
-  el('checkApi').addEventListener('click', checkApi);
-  el('reloadReq').addEventListener('click', loadRequests);
-  el('clearMessages').addEventListener('click', ()=> { messagesDiv.innerHTML=''; });
+            // Initialize modals
+            setupModal('openLogin', 'loginModal', 'closeLogin');
+            setupModal('openRegister', 'registerModal', 'closeRegister');
+            setupModal('clientAreaBtn', 'loginModal', 'closeLogin');
 
-  // auto refresh every 3.5s
-  setInterval(()=>{ loadMessages(); loadDevices(); loadRequests(); }, 3500);
+            // Show status message function
+            function showStatusMessage(message, type = 'success') {
+                const statusMessage = document.getElementById('statusMessage');
+                const statusText = document.getElementById('statusText');
+                
+                statusText.textContent = message;
+                statusMessage.className = 'status-message show';
+                statusMessage.classList.add(type);
+                
+                const icon = statusMessage.querySelector('i');
+                if (type === 'success') icon.className = 'fas fa-check-circle';
+                else if (type === 'error') icon.className = 'fas fa-times-circle';
+                else if (type === 'warning') icon.className = 'fas fa-exclamation-triangle';
+                else if (type === 'info') icon.className = 'fas fa-info-circle';
+                
+                setTimeout(() => {
+                    statusMessage.classList.remove('show');
+                }, 5000);
+            }
 
-  // init
-  checkApi();
-  loadMessages();
-  loadDevices();
-  loadRequests();
-</script>
+            // Generate verification code
+            function generateVerificationCode() {
+                return Math.floor(100000 + Math.random() * 900000).toString();
+            }
+
+            // Store user in database
+            async function storeUserInDatabase(userData) {
+                try {
+                    if (db) {
+                        await db.collection('users').doc(userData.email).set({
+                            username: userData.username,
+                            email: userData.email,
+                            password: userData.password,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            verified: userData.verified || false
+                        });
+                    }
+                    // Always save to fallback
+                    fallbackStorage.saveUser(userData);
+                    return true;
+                } catch (error) {
+                    console.error('Error storing user:', error);
+                    fallbackStorage.saveUser(userData);
+                    return true;
+                }
+            }
+
+            // Verify user credentials
+            async function verifyUserCredentials(email, password) {
+                try {
+                    let userData = null;
+                    
+                    if (db) {
+                        const userDoc = await db.collection('users').doc(email).get();
+                        if (userDoc.exists) {
+                            userData = userDoc.data();
+                        }
+                    }
+                    
+                    // If Firebase fails or no user found, try fallback
+                    if (!userData) {
+                        userData = fallbackStorage.getUser(email);
+                    }
+                    
+                    if (userData) {
+                        // Simple password check
+                        if (userData.password === password) {
+                            return { success: true, user: userData };
+                        } else {
+                            return { success: false, error: 'Invalid password' };
+                        }
+                    } else {
+                        return { success: false, error: 'User not found' };
+                    }
+                } catch (error) {
+                    console.error('Authentication error:', error);
+                    return { success: false, error: 'Authentication failed' };
+                }
+            }
+
+            // Check if user exists
+            async function checkUserExists(email) {
+                try {
+                    if (db) {
+                        const userDoc = await db.collection('users').doc(email).get();
+                        if (userDoc.exists) return true;
+                    }
+                    return fallbackStorage.userExists(email);
+                } catch (error) {
+                    return fallbackStorage.userExists(email);
+                }
+            }
+
+            // Send verification email using EmailJS
+            async function sendVerificationEmail(email, username, code) {
+                try {
+                    const templateParams = {
+                        to_name: username,
+                        to_email: email,
+                        verification_code: code,
+                        time: new Date().toLocaleString('en-US', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            timeZoneName: 'short'
+                        })
+                    };
+
+                    const response = await emailjs.send(
+                        "service_zojeym7", 
+                        "template_ygcjqiw", 
+                        templateParams
+                    );
+
+                    console.log('Email sent successfully:', response);
+                    showStatusMessage(`Verification email sent to ${email}`, 'success');
+                    return true;
+                    
+                } catch (error) {
+                    console.error('Email sending failed:', error);
+                    // Fallback: show code in console and alert
+                    console.log(`📧 VERIFICATION CODE FOR ${email}: ${code}`);
+                    alert(`DEMO: Verification Code for ${email}: ${code}\n\nEmail service temporarily unavailable. Use this code to verify.`);
+                    showStatusMessage('Email service temporarily unavailable. Check console for verification code.', 'warning');
+                    return true;
+                }
+            }
+
+            // Login form submission
+            document.getElementById('loginForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                
+                if (!email || !password) {
+                    showStatusMessage('Please fill in all fields', 'error');
+                    return;
+                }
+                
+                const loginBtn = document.querySelector('#loginForm .modal-btn');
+                const originalText = loginBtn.innerHTML;
+                loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
+                loginBtn.disabled = true;
+                
+                try {
+                    const result = await verifyUserCredentials(email, password);
+                    
+                    if (result.success) {
+                        showStatusMessage('Login successful!', 'success');
+                        document.getElementById('loginModal').classList.add('closing');
+                        setTimeout(() => {
+                            document.getElementById('loginModal').classList.remove('closing');
+                            document.getElementById('loginModal').classList.remove('active');
+                            document.body.style.overflow = 'auto';
+                            // Store user session
+                            localStorage.setItem('currentUser', JSON.stringify(result.user));
+                            // Update UI
+                            document.getElementById('clientAreaBtn').textContent = 'Dashboard';
+                        }, 300);
+                    } else {
+                        showStatusMessage(result.error, 'error');
+                    }
+                } catch (error) {
+                    showStatusMessage('Login failed. Please try again.', 'error');
+                } finally {
+                    loginBtn.innerHTML = originalText;
+                    loginBtn.disabled = false;
+                }
+            });
+
+            // Register form submission
+            document.getElementById('registerForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('reg-username').value;
+                const email = document.getElementById('reg-email').value;
+                const password = document.getElementById('reg-password').value;
+                const confirmPassword = document.getElementById('reg-confirm-password').value;
+                
+                if (!username || !email || !password || !confirmPassword) {
+                    showStatusMessage('Please fill in all fields', 'error');
+                    return;
+                }
+                
+                if (password !== confirmPassword) {
+                    showStatusMessage('Passwords do not match.', 'error');
+                    return;
+                }
+                
+                if (password.length < 6) {
+                    showStatusMessage('Password must be at least 6 characters long.', 'error');
+                    return;
+                }
+                
+                const registerBtn = document.querySelector('#registerForm .modal-btn');
+                const originalText = registerBtn.innerHTML;
+                registerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
+                registerBtn.disabled = true;
+                
+                try {
+                    const userExists = await checkUserExists(email);
+                    
+                    if (userExists) {
+                        showStatusMessage('An account with this email already exists.', 'error');
+                        return;
+                    }
+                    
+                    emailVerificationCode = generateVerificationCode();
+                    currentUserEmail = email;
+                    currentUserName = username;
+                    
+                    // Send verification email via EmailJS
+                    const emailSent = await sendVerificationEmail(email, username, emailVerificationCode);
+                    
+                    if (emailSent) {
+                        showStatusMessage('Account created! Verification email sent.', 'success');
+                        document.getElementById('registerModal').classList.add('closing');
+                        setTimeout(() => {
+                            document.getElementById('registerModal').classList.remove('closing');
+                            document.getElementById('registerModal').classList.remove('active');
+                            document.getElementById('emailVerificationModal').classList.add('active');
+                            setupEmailCodeInputs();
+                            startEmailResendTimer();
+                        }, 300);
+                    }
+                    
+                } catch (error) {
+                    showStatusMessage('Registration failed. Please try again.', 'error');
+                } finally {
+                    registerBtn.innerHTML = originalText;
+                    registerBtn.disabled = false;
+                }
+            });
+
+            // Setup email code inputs
+            function setupEmailCodeInputs() {
+                const codeInputs = document.querySelectorAll('#emailVerificationModal .code-input');
+                const statusDiv = document.getElementById('emailVerificationStatus');
+                
+                codeInputs.forEach(input => {
+                    input.value = '';
+                    input.classList.remove('error');
+                });
+                statusDiv.style.display = 'none';
+                
+                codeInputs.forEach((input, index) => {
+                    input.addEventListener('input', function(e) {
+                        this.value = this.value.replace(/\D/g, '');
+                        
+                        if (this.value.length === 1) {
+                            if (index < codeInputs.length - 1) {
+                                codeInputs[index + 1].focus();
+                            }
+                        }
+                        
+                        this.classList.remove('error');
+                        statusDiv.style.display = 'none';
+                    });
+                    
+                    input.addEventListener('keydown', function(e) {
+                        if (e.key === 'Backspace' && this.value.length === 0) {
+                            if (index > 0) {
+                                codeInputs[index - 1].focus();
+                            }
+                        }
+                    });
+                });
+                
+                codeInputs[0].focus();
+            }
+
+            // Start email resend timer
+            function startEmailResendTimer() {
+                let timeLeft = 60;
+                const resendBtn = document.getElementById('resendEmailCodeBtn');
+                const timerSpan = document.getElementById('resendEmailTimer');
+                
+                resendBtn.disabled = true;
+                
+                emailVerificationTimer = setInterval(() => {
+                    timeLeft--;
+                    timerSpan.textContent = `(${timeLeft}s)`;
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(emailVerificationTimer);
+                        resendBtn.disabled = false;
+                        timerSpan.textContent = '';
+                        resendBtn.innerHTML = 'Resend Code';
+                    }
+                }, 1000);
+            }
+
+            // Resend email code
+            document.getElementById('resendEmailCodeBtn').addEventListener('click', async function() {
+                if (!this.disabled) {
+                    emailVerificationCode = generateVerificationCode();
+                    await sendVerificationEmail(currentUserEmail, currentUserName, emailVerificationCode);
+                    startEmailResendTimer();
+                    this.disabled = true;
+                }
+            });
+
+            // Verify email code
+            document.getElementById('verifyEmailCodeBtn').addEventListener('click', async function() {
+                const codeInputs = document.querySelectorAll('#emailVerificationModal .code-input');
+                let enteredCode = '';
+                codeInputs.forEach(input => {
+                    enteredCode += input.value;
+                });
+                
+                if (enteredCode.length !== 6) {
+                    showEmailVerificationError('Please enter the complete 6-digit code.');
+                    return;
+                }
+                
+                if (enteredCode === emailVerificationCode) {
+                    const btn = this;
+                    const originalText = btn.innerHTML;
+                    
+                    btn.innerHTML = '<span class="loading-animation" style="display: inline-block;"></span> Verifying...';
+                    btn.disabled = true;
+                    
+                    try {
+                        const userData = {
+                            username: currentUserName,
+                            email: currentUserEmail,
+                            password: document.getElementById('reg-password').value,
+                            createdAt: new Date().toISOString(),
+                            verified: true,
+                            verifiedAt: new Date().toISOString()
+                        };
+                        
+                        const storageSuccess = await storeUserInDatabase(userData);
+                        
+                        if (storageSuccess) {
+                            showEmailVerificationStatus('Email verified successfully!', 'success');
+                            
+                            setTimeout(() => {
+                                document.getElementById('emailVerificationModal').classList.remove('active');
+                                document.body.style.overflow = 'auto';
+                                
+                                if (emailVerificationTimer) {
+                                    clearInterval(emailVerificationTimer);
+                                }
+                                
+                                localStorage.setItem('currentUser', JSON.stringify(userData));
+                                document.getElementById('clientAreaBtn').textContent = 'Dashboard';
+                                
+                                showStatusMessage('Registration completed successfully!', 'success');
+                            }, 1500);
+                        } else {
+                            showEmailVerificationError('Error saving user data. Please try again.');
+                        }
+                    } catch (error) {
+                        showEmailVerificationError('Error during verification. Please try again.');
+                    } finally {
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }
+                } else {
+                    showEmailVerificationError('Invalid verification code. Please try again.');
+                }
+            });
+
+            // Show email verification error
+            function showEmailVerificationError(message) {
+                const codeInputs = document.querySelectorAll('#emailVerificationModal .code-input');
+                const statusDiv = document.getElementById('emailVerificationStatus');
+                
+                codeInputs.forEach(input => {
+                    input.classList.add('error');
+                });
+                
+                statusDiv.style.display = 'block';
+                statusDiv.className = 'verification-status error';
+                statusDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+            }
+
+            // Show email verification status
+            function showEmailVerificationStatus(message, type) {
+                const statusDiv = document.getElementById('emailVerificationStatus');
+                statusDiv.style.display = 'block';
+                statusDiv.className = `verification-status ${type}`;
+                
+                let icon = 'fas fa-info-circle';
+                if (type === 'success') icon = 'fas fa-check-circle';
+                else if (type === 'error') icon = 'fas fa-times-circle';
+                
+                statusDiv.innerHTML = `<i class="${icon}"></i> ${message}`;
+            }
+
+            // Forgot password functionality
+            document.getElementById('forgotPasswordModal').addEventListener('click', function(e) {
+                e.preventDefault();
+                const email = document.getElementById('loginEmail').value || prompt('Please enter your email address:');
+                if (email) {
+                    const resetCode = generateVerificationCode();
+                    console.log(`Password reset code for ${email}: ${resetCode}`);
+                    showStatusMessage('Password reset instructions sent! Check console for reset code.', 'info');
+                }
+            });
+
+            document.getElementById('forgotPasswordLink').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('loginModal').classList.add('active');
+            });
+
+            // Modal switching
+            document.getElementById('switchToRegister').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('loginModal').classList.add('closing');
+                setTimeout(() => {
+                    document.getElementById('loginModal').classList.remove('closing');
+                    document.getElementById('loginModal').classList.remove('active');
+                    document.getElementById('registerModal').classList.add('active');
+                }, 300);
+            });
+
+            document.getElementById('switchToLogin').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('registerModal').classList.add('closing');
+                setTimeout(() => {
+                    document.getElementById('registerModal').classList.remove('closing');
+                    document.getElementById('registerModal').classList.remove('active');
+                    document.getElementById('loginModal').classList.add('active');
+                }, 300);
+            });
+
+            // Cancel email verification
+            document.getElementById('cancelEmailVerification').addEventListener('click', function() {
+                document.getElementById('emailVerificationModal').classList.remove('active');
+                document.body.style.overflow = 'auto';
+                
+                if (emailVerificationTimer) {
+                    clearInterval(emailVerificationTimer);
+                }
+                
+                showStatusMessage('Email verification cancelled.', 'warning');
+            });
+
+            // Start Free Trial button
+            document.getElementById('startFreeTrial').addEventListener('click', function() {
+                document.getElementById('openRegister').click();
+            });
+
+            // Navigation smooth scrolling
+            document.getElementById('homeLink').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+
+            document.getElementById('featuresLink').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('features').scrollIntoView({ behavior: 'smooth' });
+            });
+
+            document.getElementById('pricingLink').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('pricing').scrollIntoView({ behavior: 'smooth' });
+            });
+
+            // FAQ functionality
+            const faqQuestions = document.querySelectorAll('.faq-question');
+            faqQuestions.forEach(question => {
+                question.addEventListener('click', () => {
+                    const answer = question.nextElementSibling;
+                    const isActive = answer.classList.contains('active');
+                    
+                    document.querySelectorAll('.faq-answer').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    document.querySelectorAll('.faq-question').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    
+                    if (!isActive) {
+                        answer.classList.add('active');
+                        question.classList.add('active');
+                    }
+                });
+            });
+
+            // Check if user is already logged in
+            function checkAuthStatus() {
+                const currentUser = localStorage.getItem('currentUser');
+                if (currentUser) {
+                    document.getElementById('clientAreaBtn').textContent = 'Dashboard';
+                }
+            }
+
+            checkAuthStatus();
+        });
+    </script>
 </body>
 </html>
